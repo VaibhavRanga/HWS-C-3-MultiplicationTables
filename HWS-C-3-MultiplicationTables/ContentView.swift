@@ -7,11 +7,23 @@
 
 import SwiftUI
 
+@Observable
+class EasyGame {
+    let numbers = (2...10).shuffled()
+    let easyMultipliers = [2, 3, 4].shuffled()
+}
+
+@Observable
+class HardGame {
+    let numbers = (11...19).shuffled()
+    let hardMultipliers = [5, 6, 7, 8, 9].shuffled()
+}
+
 struct ContentView: View {
-    let pickerMaxNumbers = [4, 5, 6, 7, 8, 9]
-    @State private var maxNumber = 4
+    var easyGame = EasyGame()
+    var hardGame = HardGame()
     
-    var multipliers = [2, 3, 4, 5, 6, 7, 8, 9].shuffled()
+    @State private var hardDifficulty = false
     
     @State private var num1 = 0
     @State private var num2 = 0
@@ -36,25 +48,22 @@ struct ContentView: View {
             VStack(spacing: 20) {
                 if showSettingsScreen {
                     VStack {
-                        Spacer()
+                        Text("Start Game:")
                         
-                        Form {
-                            Picker("Select a number", selection: $maxNumber) {
-                                ForEach(pickerMaxNumbers, id: \.self) {
-                                    Text("\($0)")
-                                }
-                            }
-                        }
-                        .pickerStyle(.automatic)
-                        
-                        Button("Start Game") {
+                        Button("Easy") {
+                            hardDifficulty = false
                             showSettingsScreen = false
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.mint)
                         
-                        Spacer()
-                        Spacer()
+                        Button("Hard") {
+                            hardDifficulty = true
+                            showSettingsScreen = false
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.mint)
+                        
                     }
                 } else {
                     VStack(spacing: 40) {
@@ -102,7 +111,7 @@ struct ContentView: View {
                         
                     }
                     .onAppear {
-                        askQuestion()
+                        askQuestionBasedOnDifficulty()
                     }
                 }
                 
@@ -137,19 +146,28 @@ struct ContentView: View {
             answerAlertMessage = "Your score is: \(score)/\(totalQuestions)"
             showingAnswerAlert = true
         } else {
-            askQuestion()
+            askQuestionBasedOnDifficulty()
         }
     }
     
-    func askQuestion() {
-        let numbers = (2...maxNumber).shuffled()
-        print("\(maxNumber)")
-        num1 = numbers.shuffled()[0]
-        num2 = multipliers.shuffled()[0]
+    func askEasyQuestion() {
+        num1 = easyGame.numbers.shuffled()[0]
+        num2 = easyGame.easyMultipliers.shuffled()[0]
         
         ContentView.option1 = num1 * num2
         ContentView.option2 = [(num1 - 1), num1, (num1 + 1)].randomElement()! * [(num2 - 1), num2, (num2 + 1)].randomElement()!
-        ContentView.option3 = numbers[2] * multipliers[2]
+        ContentView.option3 = easyGame.numbers[2] * easyGame.easyMultipliers[2]
+        
+        options = [ContentView.option1, ContentView.option2, ContentView.option3].shuffled()
+    }
+    
+    func askHardQuestion() {
+        num1 = hardGame.numbers.shuffled()[0]
+        num2 = hardGame.hardMultipliers.shuffled()[0]
+        
+        ContentView.option1 = num1 * num2
+        ContentView.option2 = [(num1 - 1), num1, (num1 + 1)].randomElement()! * [(num2 - 1), num2, (num2 + 1)].randomElement()!
+        ContentView.option3 = hardGame.numbers[2] * hardGame.hardMultipliers[2]
         
         options = [ContentView.option1, ContentView.option2, ContentView.option3].shuffled()
     }
@@ -157,13 +175,21 @@ struct ContentView: View {
     func restartGame() {
         score = 0
         totalQuestions = 0
-        askQuestion()
+        askQuestionBasedOnDifficulty()
     }
     
     func loadMainScreen() {
         score = 0
         totalQuestions = 0
         showSettingsScreen = true
+    }
+    
+    func askQuestionBasedOnDifficulty() {
+        if !hardDifficulty {
+            askEasyQuestion()
+        } else {
+            askHardQuestion()
+        }
     }
 }
 
